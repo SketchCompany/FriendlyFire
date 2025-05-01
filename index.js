@@ -1,4 +1,15 @@
-const { app, BrowserWindow, Tray, Menu, dialog } = require('electron');
+const config = require("./config")
+const log = require("electron-log")
+log.transports.file.level = "debug"
+log.transports.file.resolvePathFn = (variables) => {
+    return path.join(config.defaultDir, "friendlyfire.log")
+}
+Object.assign(console, log.functions)
+process.on("uncaughtException", (error) => {
+    console.error("Unhandled Exception:", error)
+})
+
+const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater } = require('electron');
 const path = require('path');
 const Downloader = require('./downloader');
 
@@ -12,15 +23,15 @@ app.whenReady().then(() => {
     downloader.start()
 
     // Optional: Tray Icon
-    tray = new Tray(path.join(__dirname, "img/friendly_fire_icon512x512.png"))
+    tray = new Tray(path.join(config.defaultDir, "app.ico"))
     const contextMenu = Menu.buildFromTemplate([
         { label: "Beenden", click: () => app.quit() }
     ])
-    tray.setToolTip("FriendlyFire Downloader")
+    tray.setToolTip("Friendly Fire")
     tray.setContextMenu(contextMenu)
 
     // Wenn du ein UI willst, kannst du hier ein Fenster öffnen:
-    // createWindow()
+    createWindow()
 })
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -43,26 +54,25 @@ const createWindow = async () => {
         minWidth: 1280,
         maxWidth: 1920,
         autoHideMenuBar: true,
-        icon: path.join(__dirname, "img/friendly_fire_icon256x256.ico"),
-        title: "Sketchy Games Launcher",
+        icon: path.join(config.defaultDir, "app.ico"),
+        title: "Friendly Fire",
         titleBarStyle: "hidden",
         titleBarOverlay: {
-            color: "rgb(30,30,35)",
-            symbolColor: "springgreen",
+            color: "rgb(10,10,15)",
+            symbolColor: "rgb(255, 50, 0)",
             height: 25,
         },
+        center: true,
+        backgroundColor: "rgb(10,10,15)",
+        backgroundMaterial: "acrylic",
+        darkTheme: true,
     })
 
-    mainWindow.loadFile("/frontend/index.html")
+    mainWindow.loadFile("./frontend/index.html")
 
     // Open the DevTools.
     !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
 }
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

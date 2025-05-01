@@ -16,9 +16,8 @@
   "keywords": [
     "application",
     "software",
-    "launcher",
-    "sketchy",
-    "games",
+    "friendly",
+    "fire",
     "sketch",
     "company"
   ],
@@ -28,11 +27,11 @@
     "url": "https://sketch-company.de"
   },
   "repository": {
-    "url": "https://github.com/SketchCompany/SketchCompany",
+    "url": "https://github.com/SketchCompany/FriendlyFire",
     "type": "github"
   },
   "bugs": {
-    "url": "https://github.com/SketchCompany/SketchCompany/issues",
+    "url": "https://github.com/SketchCompany/FriendlyFire/issues",
     "email": "sketch-company@web.de"
   },
   "license": "MIT",
@@ -53,6 +52,8 @@
   "dependencies": {
     "axios": "^1.9.0",
     "electron": "^36.0.0",
+    "electron-log": "^5.3.4",
+    "electron-squirrel-startup": "^1.0.0",
     "node-cache": "^5.1.2",
     "update-electron-app": "^3.1.1"
   }

@@ -1,0 +1,54 @@
+:root{
+    --primary: springgreen;
+    --primary-border: rgb(50, 255, 150);
+    --font-primary: rgb(225, 225, 225);
+    --font-secondary: rgb(200,200,200);
+    --background0: rgb(10,10,15);
+    --background1: rgb(20,20,30);
+    --background2: rgb(30,30,35);
+    --background3: rgb(40,40,45);
+    --background4: rgb(50,50,55);
+    --button-background: rgb(0,75,255);
+    --button-border: rgb(0,150,255);
+    --box-shadow: rgb(0,0,0,0.4);
+    --darkgray: rgb(70,70,75);
+    --gray: rgb(100,100,105);
+    --hover: rgb(150,150,155);
+
+    --padding: 5%;
+}
+html{
+    scroll-behavior: smooth;
+}
+::-webkit-scrollbar{
+    background-color: transparent;
+    width: 12px;
+}
+::-webkit-scrollbar-track{
+    background-color: transparent;
+    width: 12px;
+}
+::-webkit-scrollbar-thumb{
+    background-color: var(--background1);
+    width: 12px;
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover{
+    background-color: var(--background2);
+    cursor: pointer;
+}
+body{
+    background-color: var(--background1);
+    color: var(--font-primary);
+    font-family: "Open Sans", sans-serif;
+    padding: 0;
+    margin: 0;
+    user-select: none;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
+    background-image: linear-gradient(340deg, var(--background0) 60%, var(--background1));
+    background-attachment: fixed;
+    overflow-y: scroll;
+}
+p, ul li{
+    color: var(--font-secondary);
+}

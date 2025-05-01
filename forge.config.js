@@ -13,7 +13,7 @@ module.exports = {
       config: {
         repository: {
           owner: 'SketchCompany',
-          name: 'SketchyGamesLauncher'
+          name: 'FriendlyFire'
         },
         prerelease: false,
         draft: true,
@@ -27,12 +27,13 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         authors: "Sketch Company",
-        description: "The official Sketchy Games Launcher of the Sketch Company.",
+        description: "The official Friendly Fire file transmitter of the Sketch Company.",
         noMsi: "false",
-        iconUrl: "https://sketchy-games.sketch-company.de/res?file=launcher.ico",
+        iconUrl: "https://sketch-company.de/res?f=friendlyfire/icon.png",
         icon: "app.ico",
-        title: "Sketchy Games Launcher",
-        setupIcon: "appSetup.ico",
+        title: "Friendly Fire",
+        setupIcon: "app.ico",
+        loadingGif: "app.ico"
       },
     },
     {
@@ -44,9 +45,9 @@ module.exports = {
       config: {
         options: {
           icon: "app.png",
-          bin: "SketchyGamesLauncher",
+          bin: "FriendlyFire",
           maintainer: "Sketch Company",
-          homepage: "https://sketchy-games.sketch-company.de"
+          homepage: "https://sketch-company.de"
         }
       },
     },
@@ -55,9 +56,9 @@ module.exports = {
       config: {
         options: {
           icon: "app.png",
-          bin: "SketchyGamesLauncher",
+          bin: "FriendlyFire",
           maintainer: "Sketch Company",
-          homepage: "https://sketchy-games.sketch-company.de"
+          homepage: "https://sketch-company.de"
         }
       },
     },

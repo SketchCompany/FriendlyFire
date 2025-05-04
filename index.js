@@ -59,13 +59,15 @@ const createWindow = async () => {
         titleBarStyle: "hidden",
         titleBarOverlay: {
             color: "rgb(10,10,15)",
-            symbolColor: "rgb(255, 50, 0)",
+            symbolColor: "rgb(255, 75, 0)",
             height: 25,
         },
         center: true,
         backgroundColor: "rgb(10,10,15)",
-        backgroundMaterial: "acrylic",
         darkTheme: true,
+        resizable: false,
+        fullscreenable: false,
+        maximizable: false
     })
 
     mainWindow.loadFile("./frontend/index.html")

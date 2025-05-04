@@ -4,7 +4,7 @@ const axios = require('axios')
 const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const config = require("./config")
 
-const downloadsDir = path.parse(app.getPath("downloads")).dir + "/"
+const downloadsDir = app.getPath("downloads") + "/"
 const localConfigFile = path.join(config.defaultDir, "/config.json")
 
 class Downloader{

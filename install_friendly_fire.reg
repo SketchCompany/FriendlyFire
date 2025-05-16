@@ -2,7 +2,7 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CLASSES_ROOT\*\shell\FriendlyFire]
 @="Fire to Friend"
-"Icon"="C:\\Users\\Sketchy\\Documents\\VS-Code\\FriendlyFire\\app.ico"
+"Icon"="C:\\Users\\mtb20\\Documents\\VS-Code\\FriendlyFire\\app.ico"
 
 [HKEY_CLASSES_ROOT\*\shell\FriendlyFire\command]
-@="\"C:\\Users\\Sketchy\\Documents\\VS-Code\\FriendlyFire\\out\\FriendlyFire-win32-x64\\FriendlyFire.exe" \"%1\""
+@="\"C:\\Users\\mtb20\\Documents\\VS-Code\\FriendlyFire\\out\\FriendlyFire-win32-x64\\FriendlyFire.exe\" \"%1\""

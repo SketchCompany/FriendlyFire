@@ -9,21 +9,67 @@ process.on("uncaughtException", (error) => {
     console.error("Unhandled Exception:", error)
 })
 
-const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater } = require('electron');
-const path = require('path');
-const Downloader = require('./downloader');
+const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater } = require('electron')
+const path = require('path')
+const express = require('express')
+const { createServer } = require("http")
+const { Server } = require("socket.io")
+const Downloader = require('./downloader')
+const func = require('./functions.js')
 
-let tray = null;
+const port = 3000
+const expressApp = express()
+const server = createServer(expressApp)
+expressApp.use(express.json())
+const io = new Server(server)
+const dataDir = config.globalDir + "/data/"
+const userFile = dataDir + "/user.data"
+let tray = null
+
+app.setAsDefaultProtocolClient("friendlyfireprotocol")
+app.on("open-url", (event, url) => {
+	event.preventDefault()
+	console.log("program called by url", url)
+
+	const token = new URL(url).searchParams.get("t")
+	console.log("login token recieved", token)
+
+	// Hier könntest du das Token für Login verwenden
+})
+
+io.on("connection", (socket) => {
+    console.log("socket: connected", socket)
+
+    // open login api website in the browser
+    socket.on("b:login-through-browser", async (arg) => {
+        const open = await import("open")
+        open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login?r=/")
+    })
+
+    socket.on("b:save-login", async (arg) => {
+        const token = arg
+
+        if(!func.exists(dataDir)) await func.mkDir(dataDir)
+        
+        await func.write(userFile, func.encrypt(JSON.stringify({token})))
+        console.log("save-login: saved login token to", userFile)
+    })
+})
+
+server.listen(port, () => {
+	console.log("server running at http://localhost:" + port)
+})
 
 app.whenReady().then(() => {
     const fileToSend = process.argv[1]
+    if(fileToSend) console.log("received fileToSend", fileToSend)
 
     // Hintergrundprozess starten
     const downloader = new Downloader()
     downloader.start()
 
     // Optional: Tray Icon
-    tray = new Tray(path.join(config.defaultDir, "app.ico"))
+    tray = new Tray(path.join(__dirname, "app.ico"))
     const contextMenu = Menu.buildFromTemplate([
         { label: "Beenden", click: () => app.quit() }
     ])

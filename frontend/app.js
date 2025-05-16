@@ -10,9 +10,10 @@ let clicked
  * @param {Array<string>} blocked the list of blocked elements that cannot trigger the contextmenu
  */
 function createCtxMenu(name, id, elements, event, blocked){
-    $("body").prepend(`
-        <div id="` + id + `-ctx-menu" class="context-menu" style="display: none;"></div>
-    `)
+	$("body").prepend(`
+		<div id="${id}-ctx-menu" class="context-menu" style="display: none;"></div>
+	`)
+	
 
     $("#" + id + "-ctx-menu").append(elements)
     $("#" + id + "-ctx-menu").children().last().addClass("lastItem")

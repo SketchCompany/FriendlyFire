@@ -1,6 +1,6 @@
 {
   "name": "friendly-fire",
-  "productName": "Friendly Fire",
+  "productName": "FriendlyFire",
   "description": "A smart tool to share easy either large or small files with friends and others.",
   "version": "1.0.0",
   "icon": "app.ico",
@@ -51,10 +51,14 @@
   },
   "dependencies": {
     "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
     "electron": "^36.0.0",
     "electron-log": "^5.3.4",
     "electron-squirrel-startup": "^1.0.0",
+    "express": "^5.1.0",
     "node-cache": "^5.1.2",
+    "open": "^10.1.2",
+    "socket.io": "^4.8.1",
     "update-electron-app": "^3.1.1"
   }
 }

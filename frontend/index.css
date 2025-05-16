@@ -917,11 +917,6 @@ footer{
 .navigation-panel .left .friends .friend.active{
     background-color: var(--background3);
 }
-.navigation-panel .left .friends .friend{
-    text-align: left;
-    display: flex;
-    gap: 8px;
-}
 .navigation-panel .left .friends .friend:hover{
     text-decoration: underline;
 }
@@ -946,24 +941,30 @@ footer{
     flex-direction: column;
     gap: 10px;
 }
+.navigation-panel .right .controls .button{
+    text-align: center;
+    justify-content: center;
+}
 
-.navigation-panel .button{
+.button{
     border: 1px solid var(--darkgray);
     border-radius: 8px;
     padding: 10px 15px;
     color: var(--font-secondary);
     transition: all 200ms;
-    text-align: center;
+    text-align: left;
+    display: flex;
+    gap: 8px;
 }
-.navigation-panel .button:hover{
+.button:hover{
     cursor: pointer;
     background-color: var(--background3);
 }
-.navigation-panel .button p{
+.button p{
     margin: 0;
 }
 
-.navigation-panel .button-marked{
+.button-marked{
     background-color: rgb(235, 235, 235);
     border: 1px solid var(--darkgray);
     border-radius: 8px;
@@ -973,13 +974,28 @@ footer{
     width: 100%;
     text-align: center;
     font-weight: 500;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
 }
-.navigation-panel .button-marked:hover{
+.button-marked:hover{
     background-color: rgb(200, 200, 200);
     cursor: pointer;
 }
-.navigation-panel .button-marked p{
+.button-marked p{
     color: var(--background0);
     text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.1);
     margin: 0;
+}
+.button-marked .bi{
+    color: var(--background0);
+}
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.header .headline{
+    width: 100%;
 }

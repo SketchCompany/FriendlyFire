@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\friendlyfireprotocol]
+@="URL:Friendly Fire"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\friendlyfireprotocol\shell]
+
+[HKEY_CLASSES_ROOT\friendlyfireprotocol\shell\open]
+
+[HKEY_CLASSES_ROOT\friendlyfireprotocol\shell\open\command]
+@="\"C:\\Users\\mtb20\\Documents\\VS-Code\\FriendlyFire\\out\\FriendlyFire-win32-x64\\FriendlyFire.exe\" \"%1\""

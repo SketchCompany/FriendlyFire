@@ -21,16 +21,27 @@
     <link rel="shortcut icon" href="../img/friendly_fire_icon256x256.ico" type="image/x-icon">
     <link rel="icon" href="../img/friendly_fire_icon256x256.ico" type="image/x-icon">
 
+    <script src="/socket.io/socket.io.js"></script>
     <script defer src="./app.js"></script>
+    <script defer src="./script.js"></script>
 
     <title>Friendly Fire</title>
+    
 </head>
 <body>
     <header>
 
     </header>
     <main>
-        <h2 class="headline"><img src="../img/friendly_fire_icon512x512.png" style="width: 40px; height: 40px;" alt=""> Friendly Fire</h2>
+        <div class="header">
+            <h2 class="headline"><img src="../img/friendly_fire_icon512x512.png" style="width: 40px; height: 40px;" alt=""> Friendly Fire</h2>
+            <div>
+                <div class="login button">
+                    <span class="bi bi-person-circle"></span>
+                    <p>Anmelden</p>
+                </div>
+            </div>
+        </div>
         <div class="navigation-panel">
             <div class="left">
                 <div class="top">
@@ -66,13 +77,15 @@
                 </div>
                 <div class="controls">
                     <div class="file-select button">
-                        <p><span class="bi bi-file-earmark-text"></span> Datei auswählen</p>
+                        <span class="bi bi-file-earmark-text"></span>
+                        <p>Datei auswählen</p>
                     </div>
                     <div class="upload-progress cprogressBar" style="display: none;">
                         <div class="cprogress" style="width: 0%;"></div>
                     </div>
                     <div class="submit button-marked">
-                        <p><span class="bi bi-upload"></span> Senden</p>
+                        <span class="bi bi-upload"></span>
+                        <p>Senden</p>
                     </div>
                 </div>
             </div>

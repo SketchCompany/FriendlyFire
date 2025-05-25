@@ -17,13 +17,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Sedgwick+Ave+Display" rel="stylesheet">
 
-    <link rel="stylesheet" href="./index.css">
-    <link rel="shortcut icon" href="../img/friendly_fire_icon256x256.ico" type="image/x-icon">
-    <link rel="icon" href="../img/friendly_fire_icon256x256.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/res?f=index.css">
+    <link rel="shortcut icon" href="/res?f=img/friendly_fire_icon256x256.ico" type="image/x-icon">
+    <link rel="icon" href="/res?f=img/friendly_fire_icon256x256.ico" type="image/x-icon">
 
     <script src="/socket.io/socket.io.js"></script>
-    <script defer src="./app.js"></script>
-    <script defer src="./script.js"></script>
+    <script defer src="/res?f=app.js"></script>
+    <script defer src="/res?f=script.js"></script>
 
     <title>Friendly Fire</title>
     
@@ -34,8 +34,12 @@
     </header>
     <main>
         <div class="header">
-            <h2 class="headline"><img src="../img/friendly_fire_icon512x512.png" style="width: 40px; height: 40px;" alt=""> Friendly Fire</h2>
-            <div>
+            <h2 class="headline"><img src="/res?f=img/friendly_fire_icon512x512.png" style="width: 40px; height: 40px;" alt=""> Friendly Fire</h2>
+            <div class="navigation">
+                <div class="download-folder button">
+                    <span class="bi bi-person-circle"></span>
+                    <p>Download Ordner</p>
+                </div>
                 <div class="login button">
                     <span class="bi bi-person-circle"></span>
                     <p>Anmelden</p>
@@ -51,41 +55,60 @@
                     </div>
                 </div>
                 <div class="friends">
-                    <div class="friend button">
-                        <span class="bi bi-person-circle"></span> <p>Fanta</p>
-                    </div>
-                    <div class="friend button">
-                        <span class="bi bi-person-circle"></span> <p>Sketchy</p>
-                    </div>
-                    <div class="friend button">
-                        <span class="bi bi-person-circle"></span> <p>Fanta</p>
-                    </div>
-                    <div class="friend button">
-                        <span class="bi bi-person-circle"></span> <p>Sketchy</p>
-                    </div>
-                    <div class="friend button">
-                        <span class="bi bi-person-circle"></span> <p>Fanta</p>
-                    </div>
+
                 </div>
             </div>
             <div class="right">
-                <div>
-                    <h3 class="tab-friendName">> An Fanta senden</h3>
-                    <code class="filepath tab-filePath">
-                        C:\Users\mtb20\Documents\VS-Code\FriendlyFire\config.json
-                    </code>
+                <h3 class="tab-friend-name">
+                    <!-- > An Fanta senden -->
+                </h3>
+                <div class="navigation">
+                    <p class="tab1-label">UPLOAD</p>
+                    <span>|</span>
+                    <p class="tab2-label active">DOWNLOAD</p>
                 </div>
-                <div class="controls">
-                    <div class="file-select button">
-                        <span class="bi bi-file-earmark-text"></span>
-                        <p>Datei auswählen</p>
+                <div class="tab1" style="display: none;">
+                    <div>
+                        <code class="filepath tab-file-path">
+                            <!-- C:\Users\mtb20\Documents\VS-Code\FriendlyFire\config.json -->
+                            Keine Datei ausgewählt.
+                        </code>
                     </div>
-                    <div class="upload-progress cprogressBar" style="display: none;">
-                        <div class="cprogress" style="width: 0%;"></div>
+                    <div class="controls">
+                        <div class="file-select button">
+                            <span class="bi bi-file-earmark-text"></span>
+                            <p>Datei auswählen</p>
+                        </div>
+                        <div class="upload-progress cprogressBar" style="display: none;">
+                            <div class="cprogress" style="width: 0%;"></div>
+                            <div class="info">
+                                <p class="upload-progress-bytes"></p>
+                                <p>|</p>
+                                <p class="upload-progress-percent"></p>
+                            </div>
+                        </div>
+                        <div class="submit button-marked">
+                            <span class="bi bi-upload"></span>
+                            <p>Senden</p>
+                        </div>
                     </div>
-                    <div class="submit button-marked">
-                        <span class="bi bi-upload"></span>
-                        <p>Senden</p>
+                </div>
+                <div class="tab2">
+                    <div class="files">
+                    </div>
+                    <div class="controls">
+                        <div class="download-progress cprogressBar" style="display: none;">
+                            <div class="cprogress" style="width: 0%;"></div>
+                            <div class="info">
+                                <p class="download-progress-bytes"></p>
+                                <p>|</p>
+                                <p class="download-progress-percent"></p>
+                            </div>
+                        </div>
+                        <div class="update-files button-marked">
+                            <span class="bi bi-arrow-clockwise"></span>
+                            <p>Dateien aktuallisieren</span></p>
+                        </div>
                     </div>
                 </div>
             </div>

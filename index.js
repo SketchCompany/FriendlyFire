@@ -10,65 +10,229 @@ process.on("uncaughtException", (error) => {
 })
 
 const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater } = require('electron')
+let mainWindow
 const path = require('path')
 const express = require('express')
 const { createServer } = require("http")
 const { Server } = require("socket.io")
 const Downloader = require('./downloader')
+const downloader = new Downloader()
+const Uploader = require("./uploader")
+const uploader = new Uploader()
 const func = require('./functions.js')
+const serverManager = require("./server.js")
+const child_process = require("child_process")
+const EventEmitter = require("events")
+const eventEmitter = new EventEmitter()
+const localConfig = config.loadLocalConfig()
 
 const port = 3000
 const expressApp = express()
-const server = createServer(expressApp)
 expressApp.use(express.json())
-const io = new Server(server)
-const dataDir = config.globalDir + "/data/"
-const userFile = dataDir + "/user.data"
-let tray = null
-
-app.setAsDefaultProtocolClient("friendlyfireprotocol")
-app.on("open-url", (event, url) => {
-	event.preventDefault()
-	console.log("program called by url", url)
-
-	const token = new URL(url).searchParams.get("t")
-	console.log("login token recieved", token)
-
-	// Hier könntest du das Token für Login verwenden
-})
-
-io.on("connection", (socket) => {
-    console.log("socket: connected", socket)
-
-    // open login api website in the browser
-    socket.on("b:login-through-browser", async (arg) => {
-        const open = await import("open")
-        open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login?r=/")
-    })
-
-    socket.on("b:save-login", async (arg) => {
-        const token = arg
-
-        if(!func.exists(dataDir)) await func.mkDir(dataDir)
-        
-        await func.write(userFile, func.encrypt(JSON.stringify({token})))
-        console.log("save-login: saved login token to", userFile)
-    })
-})
-
+expressApp.use("/", serverManager)
+const server = createServer(expressApp)
 server.listen(port, () => {
 	console.log("server running at http://localhost:" + port)
 })
+const io = new Server(server)
+let tray = null
 
-app.whenReady().then(() => {
+app.setAsDefaultProtocolClient("friendlyfireprotocol")
+// create only one instance, so if an instance is already running, quit this one, 
+// otherwise check for a passed token from the api to save in to a file
+const gotTheLock = app.requestSingleInstanceLock()
+if(!gotTheLock){
+    app.quit()
+} 
+else{
+    app.on("second-instance", async (event, argv, workingDirectory) => {
+        const url = process.argv[1]
+        if(process.platform === "win32"){
+            const {token, user} = await func.saveTokenFromUrl(url)
+            if(token){
+                if(mainWindow) mainWindow.loadURL("/")
+
+                eventEmitter.emit("loggedIn", user)
+            } 
+            else console.error("parsing url and getting token 't' from", url, "failed")
+        }
+    
+        if(mainWindow){
+            if(mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
+        }
+    })
+}
+app.on("open-url", async (event, url) => {
+	event.preventDefault()
+	console.log("program called by url", url)
+
+    const {token, user} = await func.saveTokenFromUrl(url)
+    if(token){
+        if(mainWindow) mainWindow.loadURL("/")
+
+        eventEmitter.emit("loggedIn", user)
+    }
+    else console.error("parsing url and getting token 't' from", url, "failed")
+
+    if(mainWindow){
+        if(mainWindow.isMinimized()) mainWindow.restore()
+        mainWindow.focus()
+    }
+})
+
+io.on("connection", (socket) => {
+    console.log("socket: connected", socket.id)
+
+    eventEmitter.on("loggedIn", (name) => {
+        socket.emit("f:logged-in", name)
+    })
+
+    downloader.on("filesToDownloadChanged", (files, filesToDownload) => {
+		socket.emit("f:set-files-to-download", files, filesToDownload)
+	})
+
+    socket.on("b:update-files", async (arg) => {
+        await downloader.update()
+    })
+
+    socket.on("b:download-file", async (file) => {
+        const download = await downloader.download(socket, file)
+        if(download.success){
+            socket.emit("f:file-downloaded", download.data)
+        }
+        else socket.emit("f:file-downloaded-failed", download.data)
+    })
+
+    // open login api website in the browser
+    socket.on("b:login-through-browser", async (arg) => {
+		const open = await import("open")
+		open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login")
+	})
+
+    socket.on("b:open-download-folder", async (arg) => {
+        child_process.spawn("explorer", { detached: true, cwd: localConfig.downloadDir })
+    })
+
+    socket.on("b:set-receiver", (receiver) => {
+		uploader.setReceiver(receiver)
+		downloader.setReceiver(receiver)
+
+        downloader.start()
+	})
+
+    socket.on("b:open-file-selection", async (arg) => {
+		const response = await dialog.showOpenDialog({ properties: ["openFile"] })
+		if(!response.canceled){
+			const file = response.filePaths[0]
+			uploader.setFile(file)
+            socket.emit("f:open-file", file)
+		}
+        else{
+            socket.emit("f:open-file-canceled")
+        }
+	})
+
+    socket.on("b:get-friends", async (cb) => {
+        const friends = JSON.parse(func.decrypt(await func.read(config.friendsFile))).friends
+        cb(friends)
+    })
+
+    socket.on("b:add-friend", async (friendName) => {
+        console.log("add-friend: friendName", friendName)
+
+        if(!func.exists(config.dataDir)) await func.mkDir(config.dataDir)
+        
+        if(!func.exists(config.friendsFile)){
+            const response = await func.send("https://api.sketch-company.de/u/find", {userOrEmail: friendName}, true)
+            
+            if(response.status == 1){
+                const friends = []
+				friends.push({
+                    id: response.data.id,
+                    user: response.data.user
+                })
+                await func.write(config.friendsFile, func.encrypt(JSON.stringify({friends}, null, 3)))
+                console.log("add-friend:", friendName, "successfully added to friends list at", config.friendsFile)
+                socket.emit("f:friend-added", response.data.user)
+            }
+            else{
+                console.log("add-friend: error on reqeust", response.data)
+                socket.emit("f:friend-added-failed", response.data)
+            }
+        }
+        else{
+            const friends = JSON.parse(func.decrypt(await func.read(config.friendsFile))).friends
+            if(!friends.find(friend => friend.user == friendName)){
+                const response = await func.send("https://api.sketch-company.de/u/find", {userOrEmail: friendName}, true)
+                if(response.status == 1){
+                    const friends = []
+                    friends.push({
+                        id: response.data.id,
+                        user: response.data.user
+                    })
+                    await func.write(config.friendsFile, func.encrypt(JSON.stringify(friends, null, 3)))
+                    console.log("add-friend:", friendName, "successfully added to friends list at", config.friendsFile)
+                    socket.emit("f:friend-added", response.data.user)
+                }
+                else{
+                    console.log("add-friend: error on reqeust", response.data)
+                    socket.emit("f:friend-added-failed", response.data)
+                }
+            }
+            else{
+                await dialog.showMessageBox({title: "Freund ist bereits hinzugefügt", message: "Der angegebene Freund ist bereits in deiner Freundes Liste.", type: "info", defaultId: 0})
+            }
+        }
+    })
+
+    socket.on("b:send-file", async (args) => {
+        const response = await uploader.start(socket)
+
+        if(response.success){
+            socket.emit("f:file-sent", response)
+        }
+        else{
+            console.error("send-file: failed", response)
+            socket.emit("f:file-sent-failed", response)
+        }
+    })
+})
+
+app.whenReady().then(async () => {
+    if(func.exists(config.userFile)){
+        const rawUserFile = await func.read(config.userFile)
+        const decryptedJSON = func.decrypt(rawUserFile)
+        const data = JSON.parse(decryptedJSON)
+        const user1ID = await func.authenticate(data.token)
+        if(user1ID){
+            eventEmitter.emit("loggedIn", data.user)
+        }
+        else{
+            const open = await import("open")
+		    open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login")
+        }
+    }
+
     const fileToSend = process.argv[1]
     if(fileToSend) console.log("received fileToSend", fileToSend)
+    if(fileToSend && fileToSend.startsWith("friendlyfireprotocol://")){
+		const {token, user} = await func.saveTokenFromUrl(fileToSend)
+		if(token){
+			if(mainWindow) mainWindow.loadURL("/")
+            
+            eventEmitter.emit("loggedIn", user)
+		} 
+        else console.error("parsing url and getting token 't' from", fileToSend, "failed")
 
-    // Hintergrundprozess starten
-    const downloader = new Downloader()
-    downloader.start()
+		if(mainWindow) {
+			if(mainWindow.isMinimized()) mainWindow.restore()
+			mainWindow.focus()
+		}
+	}
 
-    // Optional: Tray Icon
+    uploader.setFile(fileToSend)
+
     tray = new Tray(path.join(__dirname, "app.ico"))
     const contextMenu = Menu.buildFromTemplate([
         { label: "Beenden", click: () => app.quit() }
@@ -76,7 +240,6 @@ app.whenReady().then(() => {
     tray.setToolTip("Friendly Fire")
     tray.setContextMenu(contextMenu)
 
-    // Wenn du ein UI willst, kannst du hier ein Fenster öffnen:
     createWindow()
 })
 
@@ -88,12 +251,12 @@ if (require("electron-squirrel-startup")) {
 const createWindow = async () => {
     // check for updates and react with a message if there is an update available
     autoUpdater.on("update-available", async function(){
-        dialog.showMessageBox({title: "Update Available", message: "There is an Update for the app available. It is currently being downloaded, please do not close the launcher until you are asked to restart it.", type: "info"})
+        dialog.showMessageBox({title: "Update Available", message: "There is an Update for the app available. It's currently being downloaded, please do not close the launcher until you are asked to.", type: "info"})
     })
     require("update-electron-app").updateElectronApp({updateInterval: "5 minutes"})
     
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 1280,
         height: 720,
         minHeight: 720,
@@ -116,7 +279,7 @@ const createWindow = async () => {
         maximizable: false
     })
 
-    mainWindow.loadFile("./frontend/index.html")
+    mainWindow.loadURL("http://localhost:" + port)
 
     // Open the DevTools.
     !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")

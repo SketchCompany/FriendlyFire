@@ -1,5 +1,5 @@
 :root{
-    --primary:rgb(255, 75, 0);
+    --primary:rgb(255, 80, 0);
     --primary-border: rgb(50, 255, 150);
     --font-primary: rgb(225, 225, 225);
     --font-secondary: rgb(200,200,200);
@@ -295,7 +295,11 @@ span.marked{
     margin: 0;
 }
 .dialog .content uh1{
-    font-size: 55px;
+    font-size: 35px;
+    border: 1px solid var(--darkgray);
+    border-width: 0 0 1px 0;
+    width: 100%;
+    padding-bottom: 10px;
 }
 .dialog .content uh1, .dialog .content p{
     text-align: center;
@@ -767,7 +771,7 @@ footer{
     z-index: 600;
 }
 .notification h3{
-    font-size: 30px;
+    font-size: 25px;
 }
 .notification p{
     line-height: 25px;
@@ -789,8 +793,8 @@ footer{
     cursor: pointer;
 }
 .success, .success:hover{
-    color: var(--primary) !important;
-    border-color: var(--primary) !important;
+    color: springgreen !important;
+    border-color: springgreen !important;
 }
 .error, .error:hover{
     color: red !important;
@@ -865,6 +869,7 @@ footer{
     border: 1px solid var(--darkgray);
     background-color: var(--background1);
     width: 100%;
+    position: relative;
 }
 .cprogress{
     width: 0%;
@@ -872,6 +877,20 @@ footer{
     border-radius: 12px;
     background-color: var(--primary);
     transition: all 250ms;
+    position: absolute;
+}
+.cprogressBar .info{
+    display: flex;
+    gap: 15px;
+    position: absolute;
+    left: 15px;
+    top: -2px;
+    z-index: 1;
+}
+.cprogressBar .info p{
+    font-size: 13px;
+    color: var(--font-primary);
+    margin: 0;
 }
 
 .headline{
@@ -916,6 +935,7 @@ footer{
 }
 .navigation-panel .left .friends .friend.active{
     background-color: var(--background3);
+    text-decoration: underline;
 }
 .navigation-panel .left .friends .friend:hover{
     text-decoration: underline;
@@ -931,19 +951,85 @@ footer{
 }
 
 .navigation-panel .right{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.navigation-panel .right .navigation{
+    display: flex;
+    gap: 10px;
+}
+.navigation-panel .right .navigation p{
+    font-weight: bold;
+    color: var(--hover);
+    transition: 250ms;
+}
+.navigation-panel .right .navigation p:hover{
+    color: var(--font-secondary);
+    cursor: pointer;
+}
+.navigation-panel .right .navigation p.active{
+    color: var(--font-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+}
+.navigation-panel .right .tab1{
     display: flex;
     justify-content: space-between;
     flex-direction: column;
-    width: 100%;
+    height: 100%;
 }
-.navigation-panel .right .controls{
+.navigation-panel .right .tab1 .controls{
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
-.navigation-panel .right .controls .button{
+.navigation-panel .right .tab1 .controls .button{
     text-align: center;
     justify-content: center;
+}
+
+.navigation-panel .right .tab2{
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    height: 100%;
+}
+.navigation-panel .right .tab2 .files{
+    border: 1px solid var(--darkgray);
+    border-width: 1px 0 1px 0;
+    padding: 10px 0;
+    margin: 0 0 10px 0;
+    height: 350px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow-y: auto;
+}
+.navigation-panel .right .tab2 .files::-webkit-scrollbar-thumb{
+    background-color: var(--background3);
+}
+.navigation-panel .right .tab2 .files .button{
+    min-width: 250px;
+    height: fit-content;
+    display: flex;
+    justify-content: space-between;
+}
+.navigation-panel .right .tab2 .files .button .bi-cloud-download{
+    color: var(--hover);
+}
+.navigation-panel .right .tab2 .files .button.new .bi-cloud-download, .navigation-panel .right .tab2 .files .button.new, .navigation-panel .right .tab2 .files .button.new p{
+    color: var(--primary);
+}
+.navigation-panel .right .tab2 .files .button .info{
+    display: flex;
+    gap: 10px;
+}
+.navigation-panel .right .tab2 .controls{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .button{
@@ -998,4 +1084,12 @@ footer{
 }
 .header .headline{
     width: 100%;
+}
+.header .navigation{
+    display: flex;
+    gap: 10px;
+}
+.header .navigation .button{
+    min-width: 200px;
+    justify-content: center;
 }

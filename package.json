@@ -1,64 +1,67 @@
 {
-  "name": "friendly-fire",
-  "productName": "FriendlyFire",
-  "description": "A smart tool to share easy either large or small files with friends and others.",
-  "version": "1.0.0",
-  "icon": "app.ico",
-  "main": "index.js",
-  "scripts": {
-    "test": "electron-forge start",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "build": "electron-forge make",
-    "publish": "electron-forge publish"
-  },
-  "keywords": [
-    "application",
-    "software",
-    "friendly",
-    "fire",
-    "sketch",
-    "company"
-  ],
-  "author": {
-    "name": "Sketch Company",
-    "email": "sketch-company@web.de",
-    "url": "https://sketch-company.de"
-  },
-  "repository": {
-    "url": "https://github.com/SketchCompany/FriendlyFire",
-    "type": "github"
-  },
-  "bugs": {
-    "url": "https://github.com/SketchCompany/FriendlyFire/issues",
-    "email": "sketch-company@web.de"
-  },
-  "license": "MIT",
-  "devDependencies": {
-    "@electron-forge/cli": "^7.3.0",
-    "@electron-forge/maker-deb": "^7.6.0",
-    "@electron-forge/maker-dmg": "^7.6.0",
-    "@electron-forge/maker-rpm": "^7.6.0",
-    "@electron-forge/maker-squirrel": "^7.3.0",
-    "@electron-forge/maker-zip": "^7.3.0",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.3.0",
-    "@electron-forge/plugin-fuses": "^7.3.0",
-    "@electron-forge/publisher-github": "^7.4.0",
-    "@electron/fuses": "^1.7.0",
-    "electron": "29.1.1",
-    "nodemon": "^3.1.0"
-  },
-  "dependencies": {
-    "axios": "^1.9.0",
-    "dotenv": "^16.5.0",
-    "electron": "^36.0.0",
-    "electron-log": "^5.3.4",
-    "electron-squirrel-startup": "^1.0.0",
-    "express": "^5.1.0",
-    "node-cache": "^5.1.2",
-    "open": "^10.1.2",
-    "socket.io": "^4.8.1",
-    "update-electron-app": "^3.1.1"
-  }
+	"name": "friendly-fire",
+	"productName": "FriendlyFire",
+	"description": "A smart tool to share easy either large or small files with friends and others.",
+	"version": "1.0.0",
+	"icon": "app.ico",
+	"main": "index.js",
+	"scripts": {
+		"test": "electron-forge start",
+		"start": "electron-forge start",
+		"package": "electron-forge package",
+		"make": "electron-forge make",
+		"build": "electron-forge make",
+		"publish": "electron-forge publish"
+	},
+	"keywords": [
+		"application",
+		"software",
+		"friendly",
+		"fire",
+		"sketch",
+		"company"
+	],
+	"author": {
+		"name": "Sketch Company",
+		"email": "sketch-company@web.de",
+		"url": "https://sketch-company.de"
+	},
+	"repository": {
+		"url": "https://github.com/SketchCompany/FriendlyFire",
+		"type": "github"
+	},
+	"bugs": {
+		"url": "https://github.com/SketchCompany/FriendlyFire/issues",
+		"email": "sketch-company@web.de"
+	},
+	"license": "MIT",
+	"devDependencies": {
+		"@electron-forge/cli": "^7.3.0",
+		"@electron-forge/maker-deb": "^7.6.0",
+		"@electron-forge/maker-dmg": "^7.6.0",
+		"@electron-forge/maker-rpm": "^7.6.0",
+		"@electron-forge/maker-squirrel": "^7.3.0",
+		"@electron-forge/maker-zip": "^7.3.0",
+		"@electron-forge/plugin-auto-unpack-natives": "^7.3.0",
+		"@electron-forge/plugin-fuses": "^7.3.0",
+		"@electron-forge/publisher-github": "^7.4.0",
+		"@electron/fuses": "^1.7.0",
+		"electron": "29.1.1",
+		"nodemon": "^3.1.0"
+	},
+	"dependencies": {
+		"axios": "^1.9.0",
+		"dotenv": "^16.5.0",
+		"electron": "^36.0.0",
+		"electron-log": "^5.3.4",
+		"electron-squirrel-startup": "^1.0.0",
+		"express": "^4.21.2",
+		"form-data": "^4.0.2",
+		"jsonwebtoken": "^9.0.2",
+		"node-cache": "^5.1.2",
+		"open": "^10.1.2",
+		"progress": "^2.0.3",
+		"socket.io": "^4.8.1",
+		"update-electron-app": "^3.1.1"
+	}
 }

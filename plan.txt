@@ -1,0 +1,3 @@
+"pull registry" überarbeiten, weil ich im frontend die dateien aktuallisieren will
+und man dann sehen soll welche neu sind bzw gändert wurden, um sie dann herunterzuladen.
+Also bei "pull registry" die methode zum anzeigen der geänderten oder neuen Dateien nutzen.

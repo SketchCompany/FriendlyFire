@@ -49,14 +49,22 @@ else{
         const url = argv[2]
         console.log("second-instance: url", url)
         if(process.platform === "win32"){
-            const {token, user} = await func.saveTokenFromUrl(url)
-            if(token){
-                if(mainWindow) mainWindow.loadURL("/")
+            if(url && url.startsWith("friendlyfireprotocol://")){
+                const { token, user } = await func.saveTokenFromUrl(url)
+				if (token) {
+					if (mainWindow) mainWindow.loadURL("/")
 
-                eventEmitter.emit("loggedIn", user)
-                console.log("second-instance: loggedIn:", user)
-            } 
-            else console.error("parsing url and getting token 't' from", url, "failed")
+					eventEmitter.emit("loggedIn", user)
+					console.log("second-instance: loggedIn:", user)
+				} else console.error("parsing url and getting token 't' from", url, "failed")
+            }
+            else if(url && url != "." && func.isPathValid(url) && func.exists(url)){
+                uploader.setFile(url)
+                eventEmitter.emit("uploadFileChanged", url)
+            }
+            else{
+                console.log("second-instance: url is neither a login url or a file", url)
+            }
         }
     
         if(mainWindow){
@@ -69,14 +77,31 @@ app.on("open-url", async (event, url) => {
 	event.preventDefault()
 	console.log("program called by url", url)
 
-    const {token, user} = await func.saveTokenFromUrl(url)
-    if(token){
-        if(mainWindow) mainWindow.loadURL("/")
+    if(url && url.startsWith("friendlyfireprotocol://")){
+        const { token, user } = await func.saveTokenFromUrl(url)
+        if (token) {
+            if (mainWindow) mainWindow.loadURL("/")
 
-        eventEmitter.emit("loggedIn", user)
-        console.log("open-url: loggedIn:", user)
+            eventEmitter.emit("loggedIn", user)
+            console.log("open-url: loggedIn:", user)
+        } else console.error("parsing url and getting token 't' from", url, "failed")
     }
-    else console.error("parsing url and getting token 't' from", url, "failed")
+    else if(url && url != "." && func.isPathValid(url) && func.exists(url)){
+        uploader.setFile(url)
+        eventEmitter.emit("uploadFileChanged", url)
+    }
+    else{
+        console.log("open-url: url is neither a login url or a file", url)
+    }
+
+    // const {token, user} = await func.saveTokenFromUrl(url)
+    // if(token){
+    //     if(mainWindow) mainWindow.loadURL("/")
+
+    //     eventEmitter.emit("loggedIn", user)
+    //     console.log("open-url: loggedIn:", user)
+    // }
+    // else console.error("parsing url and getting token 't' from", url, "failed")
 
     if(mainWindow){
         if(mainWindow.isMinimized()) mainWindow.restore()
@@ -104,6 +129,10 @@ io.on("connection", async (socket) => {
     eventEmitter.on("loggedIn", (name) => {
         console.log("loggedIn: name:", name)
         socket.emit("f:logged-in", name)
+    })
+
+    eventEmitter.on("uploadFileChanged", (file) => {
+        socket.emit("f:file-set", file)
     })
 
     downloader.on("filesToDownloadChanged", (files, filesToDownload) => {

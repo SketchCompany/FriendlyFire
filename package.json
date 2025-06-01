@@ -2,7 +2,7 @@
 	"name": "friendly-fire",
 	"productName": "FriendlyFire",
 	"description": "A smart tool to share easy either large or small files with friends and others.",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"icon": "app.ico",
 	"main": "index.js",
 	"scripts": {

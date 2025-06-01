@@ -28,8 +28,8 @@ function setDroppedFile(event){
 		dt.items.add(files[0])
         socket.emit("b:set-file", dt.files[0].path)
 		console.log("dropped file set", dt.files[0].path)
-        openTab1()
         setFilePath(dt.files[0].path)
+        openTab1()
 	}
 }
 
@@ -212,6 +212,11 @@ function updateFiles(){
 //     console.error(err)
 //     notify("Aktuallisieren fehlgeschlagen", err, "error")
 // })
+
+socket.on("f:file-set", (file) => {
+    setFilePath(file)
+    openTab1()
+})
 
 socket.on("f:set-files-to-download", (files, filesToDownload) => {
     updateRegistryView(files, filesToDownload)

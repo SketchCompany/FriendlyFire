@@ -9,4 +9,4 @@ Windows Registry Editor Version 5.00
 [HKEY_CLASSES_ROOT\friendlyfireprotocol\shell\open]
 
 [HKEY_CLASSES_ROOT\friendlyfireprotocol\shell\open\command]
-@="\"C:\\Users\\mtb20\\Documents\\VS-Code\\FriendlyFire\\out\\FriendlyFire-win32-x64\\FriendlyFire.exe\" \"%1\""
+@="\"C:\\Users\\%USERPROFILE%\\AppData\\Local\\friendly_fire\\FriendlyFire.exe\" \"%1\""

@@ -7,8 +7,31 @@ $(".submit").click(sendFile)
 $(".tab1-label").click(openTab1)
 $(".tab2-label").click(openTab2)
 $(".update-files").click(updateFiles)
+$("main").on("drop", setDroppedFile)
 updateFriendsList()
 updateFiles()
+
+const dropzone = $("main")
+const events = ['dragenter', 'dragover', 'dragleave', 'drop']
+
+events.forEach(eventName => {
+    dropzone.on(eventName, (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+    })
+})
+function setDroppedFile(event){
+    const e = event.originalEvent
+    const files = e.dataTransfer.files
+	if(files.length > 0) {
+		const dt = new DataTransfer()
+		dt.items.add(files[0])
+        socket.emit("b:set-file", dt.files[0].path)
+		console.log("dropped file set", dt.files[0].path)
+        openTab1()
+        setFilePath(dt.files[0].path)
+	}
+}
 
 function openTab1(){
     $(".tab1").css("display", "flex")
@@ -24,11 +47,12 @@ function openTab2() {
 	$(".tab2-label").addClass("active")
 }
 
-function openLoginDialog(){
-    socket.on("f:logged-in", (name) => {
-        $(".login p").html(name)
-    })
+socket.on("f:logged-in", (name) => {
+	console.log(name)
+	$(".login p").html(name)
+})
 
+function openLoginDialog(){
     socket.emit("b:login-through-browser")
     console.log("b:login-through-browser")
 }
@@ -86,6 +110,8 @@ function updateFriendsList(){
     friendsListElement.empty()
 
     socket.emit("b:get-friends", (friends) => {
+        console.log(friends)
+        $(".friends").empty()
         friends.forEach((element, index) => {
             addFriendsListElement(element, index)
         })
@@ -103,6 +129,7 @@ function addFriendsListElement(friend, index){
     element.click(function(){
         setTabView(friend, element)
         socket.emit("b:set-receiver", friend.id)
+        socket.emit("b:update-files")
     })
     if(index == 0){
         setTabView(friend, element)
@@ -138,10 +165,11 @@ socket.on("f:file-sent-failed", (err) => {
 	notify("Datei senden fehlgeschlagen", err, "error")
 })
 
-socket.on("f:upload-progress-changed", (progress, bytesLoaded, totalBytes, finished) => {
+socket.on("f:upload-progress-changed", (progress, speed, bytesLoaded, totalBytes, finished) => {
     $(".upload-progress").css("display", "block")
     $(".upload-progress .cprogress").css("width", progress + "%")
     $(".upload-progress .info .upload-progress-bytes").html(`${Math.round(bytesLoaded / 1000000)} MB / ${Math.round(totalBytes / 1000000)} MB`)
+    $(".download-progress .info .upload-speed").html(`${Math.round(speed / 1000000)} MB/s`)
     $(".upload-progress .info .upload-progress-percent").html(`${progress}%`)
     if(finished){
         setTimeout(function(){
@@ -151,10 +179,11 @@ socket.on("f:upload-progress-changed", (progress, bytesLoaded, totalBytes, finis
     }
 })
 
-socket.on("f:download-progress-changed", (progress, bytesLoaded, totalBytes, finished) => {
+socket.on("f:download-progress-changed", (progress, speed, bytesLoaded, totalBytes, finished) => {
     $(".download-progress").css("display", "block")
     $(".download-progress .cprogress").css("width", progress + "%")
     $(".download-progress .info .download-progress-bytes").html(`${Math.round(bytesLoaded / 1000000)} MB / ${Math.round(totalBytes / 1000000)} MB`)
+    $(".download-progress .info .download-speed").html(`${Math.round(speed / 1000000)} MB/s`)
     $(".download-progress .info .download-progress-percent").html(`${progress}%`)
     if(finished){
         setTimeout(function(){

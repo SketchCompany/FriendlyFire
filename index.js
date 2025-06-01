@@ -46,13 +46,15 @@ if(!gotTheLock){
 } 
 else{
     app.on("second-instance", async (event, argv, workingDirectory) => {
-        const url = process.argv[1]
+        const url = argv[2]
+        console.log("second-instance: url", url)
         if(process.platform === "win32"){
             const {token, user} = await func.saveTokenFromUrl(url)
             if(token){
                 if(mainWindow) mainWindow.loadURL("/")
 
                 eventEmitter.emit("loggedIn", user)
+                console.log("second-instance: loggedIn:", user)
             } 
             else console.error("parsing url and getting token 't' from", url, "failed")
         }
@@ -72,6 +74,7 @@ app.on("open-url", async (event, url) => {
         if(mainWindow) mainWindow.loadURL("/")
 
         eventEmitter.emit("loggedIn", user)
+        console.log("open-url: loggedIn:", user)
     }
     else console.error("parsing url and getting token 't' from", url, "failed")
 
@@ -81,10 +84,25 @@ app.on("open-url", async (event, url) => {
     }
 })
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log("socket: connected", socket.id)
 
+    if(func.exists(config.userFile)){
+        const rawUserFile = await func.read(config.userFile)
+        const decryptedJSON = func.decrypt(rawUserFile)
+        const data = JSON.parse(decryptedJSON)
+        const user1ID = await func.authenticate(data.token)
+        if(user1ID){
+            socket.emit("f:logged-in", data.user)
+        }
+        else{
+            const open = await import("open")
+		    open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login")
+        }
+    }
+
     eventEmitter.on("loggedIn", (name) => {
+        console.log("loggedIn: name:", name)
         socket.emit("f:logged-in", name)
     })
 
@@ -111,7 +129,12 @@ io.on("connection", (socket) => {
 	})
 
     socket.on("b:open-download-folder", async (arg) => {
-        child_process.spawn("explorer", { detached: true, cwd: localConfig.downloadDir })
+        const open = await import("open")
+        await open.default(localConfig.downloadDir, {wait: false})
+    })
+
+    socket.on("b:set-file", (file) => {
+        uploader.setFile(file)
     })
 
     socket.on("b:set-receiver", (receiver) => {
@@ -134,8 +157,14 @@ io.on("connection", (socket) => {
 	})
 
     socket.on("b:get-friends", async (cb) => {
-        const friends = JSON.parse(func.decrypt(await func.read(config.friendsFile))).friends
-        cb(friends)
+        if(func.exists(config.friendsFile)){
+            const rawFriendsFile = await func.read(config.friendsFile)
+            const decryptedJSON = func.decrypt(rawFriendsFile)
+            console.log(decryptedJSON)
+            const friends = JSON.parse(decryptedJSON).friends
+			cb(friends)
+        }
+        else cb([])
     })
 
     socket.on("b:add-friend", async (friendName) => {
@@ -166,12 +195,11 @@ io.on("connection", (socket) => {
             if(!friends.find(friend => friend.user == friendName)){
                 const response = await func.send("https://api.sketch-company.de/u/find", {userOrEmail: friendName}, true)
                 if(response.status == 1){
-                    const friends = []
                     friends.push({
                         id: response.data.id,
                         user: response.data.user
                     })
-                    await func.write(config.friendsFile, func.encrypt(JSON.stringify(friends, null, 3)))
+                    await func.write(config.friendsFile, func.encrypt(JSON.stringify({friends}, null, 3)))
                     console.log("add-friend:", friendName, "successfully added to friends list at", config.friendsFile)
                     socket.emit("f:friend-added", response.data.user)
                 }
@@ -200,28 +228,17 @@ io.on("connection", (socket) => {
 })
 
 app.whenReady().then(async () => {
-    if(func.exists(config.userFile)){
-        const rawUserFile = await func.read(config.userFile)
-        const decryptedJSON = func.decrypt(rawUserFile)
-        const data = JSON.parse(decryptedJSON)
-        const user1ID = await func.authenticate(data.token)
-        if(user1ID){
-            eventEmitter.emit("loggedIn", data.user)
-        }
-        else{
-            const open = await import("open")
-		    open.default("https://api.sketch-company.de/login?redirect=friendlyfireprotocol://login")
-        }
-    }
-
     const fileToSend = process.argv[1]
     if(fileToSend) console.log("received fileToSend", fileToSend)
     if(fileToSend && fileToSend.startsWith("friendlyfireprotocol://")){
+        console.log("whenReady: fileToSend:", fileToSend)
 		const {token, user} = await func.saveTokenFromUrl(fileToSend)
 		if(token){
 			if(mainWindow) mainWindow.loadURL("/")
             
             eventEmitter.emit("loggedIn", user)
+            console.log("whenReady: loggedIn:", user)
+        
 		} 
         else console.error("parsing url and getting token 't' from", fileToSend, "failed")
 
@@ -241,6 +258,7 @@ app.whenReady().then(async () => {
     tray.setContextMenu(contextMenu)
 
     createWindow()
+    !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
 })
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -282,7 +300,7 @@ const createWindow = async () => {
     mainWindow.loadURL("http://localhost:" + port)
 
     // Open the DevTools.
-    !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
+    //!app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

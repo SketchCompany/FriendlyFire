@@ -406,7 +406,7 @@ app.whenReady().then(async () => {
                         subtitle, 
                         body: friend.user + " hat dir " + msg.data.newFiles[0].name + " gesendet.",
                         actions,
-                        closeButtonText
+                        closeButtonText,
                     })
                 }
                 else {
@@ -416,17 +416,21 @@ app.whenReady().then(async () => {
 						subtitle,
 						body: "Du hast " + msg.data.newFiles[0].name + " gesendet bekommen.",
 						actions,
-						closeButtonText
+						closeButtonText,
 					})
                 }
 
                 notification.on("action", (event, index) => {
                     if (index == 0) {
-                        mainWindow.show()
-                        mainWindow.focus()
+                        if (mainWindow && !mainWindow.isVisible()) {
+							mainWindow.show()
+							mainWindow.focus()
+						}
                     } else if (index == 1) {
-                        mainWindow.show()
-                        mainWindow.focus()
+                        if (mainWindow && !mainWindow.isVisible()) {
+							mainWindow.show()
+							mainWindow.focus()
+						}
                         eventEmitter.emit("downloadFile", msg.data.newFiles[0])
                     }
                 })
@@ -436,8 +440,10 @@ app.whenReady().then(async () => {
                 })
 
                 notification.on("click", (event) => {
-                    mainWindow.show()
-                    mainWindow.focus()
+                    if(mainWindow && !mainWindow.isVisible()){
+                        mainWindow.show()
+						mainWindow.focus()
+                    }
                 })
 
                 notification.show()

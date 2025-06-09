@@ -30,14 +30,14 @@ function loadLocalConfig(){
         else config.downloadDir = downloadsDir
 
 		if (config.pollInterval < 1 || config.pollInterval > 15 * 60) config.pollInterval = 30
-		console.log("loadConfig: loaded localConfig from", localConfigFile)
+		console.log("loadLocalConfig: loaded localConfig from", localConfigFile)
 	} 
     else{
-		console.log("loadConfig: cannot find localConfig file at", localConfigFile)
+		console.log("loadLocalConfig: cannot find localConfig file at", localConfigFile)
 
 		fs.writeFileSync(localConfigFile, JSON.stringify(config, null, 3))
 	}
-	console.log("loadConfig:", JSON.stringify(config, null, 3))
+	console.log("loadLocalConfig:", JSON.stringify(config, null, 3))
     return config
 }
 
@@ -49,5 +49,6 @@ module.exports = {
 	friendsFile,
 	registryFile,
 	registriesDir,
+	downloadsDir,
 	loadLocalConfig,
 }

@@ -9,8 +9,10 @@ process.on("uncaughtException", (error) => {
     console.error("Unhandled Exception:", error)
 })
 
-const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater } = require('electron')
+const { app, BrowserWindow, Tray, Menu, dialog, autoUpdater, Notification } = require('electron')
 let mainWindow
+require("./autolaunch.js")
+const { Worker } = require("worker_threads")
 const path = require('path')
 const express = require('express')
 const { createServer } = require("http")
@@ -68,8 +70,13 @@ else{
         }
     
         if(mainWindow){
-            if(mainWindow.isMinimized()) mainWindow.restore()
-            mainWindow.focus()
+            if (!mainWindow.isVisible()) {
+                mainWindow.show()
+                mainWindow.focus()
+			} else if (mainWindow.isMinimized()) {
+				mainWindow.restore()
+				mainWindow.focus()
+			} 
         }
     })
 }
@@ -103,12 +110,18 @@ app.on("open-url", async (event, url) => {
     // }
     // else console.error("parsing url and getting token 't' from", url, "failed")
 
-    if(mainWindow){
-        if(mainWindow.isMinimized()) mainWindow.restore()
-        mainWindow.focus()
-    }
+    if (mainWindow) {
+		if (!mainWindow.isVisible()) {
+			mainWindow.show()
+			mainWindow.focus()
+		} else if (mainWindow.isMinimized()) {
+			mainWindow.restore()
+			mainWindow.focus()
+		}
+	}
 })
 
+let startedWithFire = null
 io.on("connection", async (socket) => {
     console.log("socket: connected", socket.id)
 
@@ -131,8 +144,17 @@ io.on("connection", async (socket) => {
         socket.emit("f:logged-in", name)
     })
 
+    if(startedWithFire){
+        socket.emit("f:file-set", startedWithFire)
+        console.log("io connection: startedWithFire:", startedWithFire)
+    }
+
     eventEmitter.on("uploadFileChanged", (file) => {
         socket.emit("f:file-set", file)
+    })
+
+    eventEmitter.on("newFiles", (files, newFiles) => {
+        socket.emit("f:set-files-to-download", files, newFiles)
     })
 
     downloader.on("filesToDownloadChanged", (files, filesToDownload) => {
@@ -141,6 +163,14 @@ io.on("connection", async (socket) => {
 
     socket.on("b:update-files", async (arg) => {
         await downloader.update()
+    })
+
+    eventEmitter.on("downloadFile", async (file) => {
+        const download = await downloader.download(socket, file)
+        if(download.success){
+            socket.emit("f:file-downloaded", download.data)
+        }
+        else socket.emit("f:file-downloaded-failed", download.data)
     })
 
     socket.on("b:download-file", async (file) => {
@@ -189,7 +219,6 @@ io.on("connection", async (socket) => {
         if(func.exists(config.friendsFile)){
             const rawFriendsFile = await func.read(config.friendsFile)
             const decryptedJSON = func.decrypt(rawFriendsFile)
-            console.log(decryptedJSON)
             const friends = JSON.parse(decryptedJSON).friends
 			cb(friends)
         }
@@ -271,23 +300,162 @@ app.whenReady().then(async () => {
 		} 
         else console.error("parsing url and getting token 't' from", fileToSend, "failed")
 
-		if(mainWindow) {
-			if(mainWindow.isMinimized()) mainWindow.restore()
-			mainWindow.focus()
+        if (mainWindow) {
+			if (!mainWindow.isVisible()) {
+				mainWindow.show()
+				mainWindow.focus()
+			} else if (mainWindow.isMinimized()) {
+				mainWindow.restore()
+				mainWindow.focus()
+			}
 		}
 	}
+    else if(fileToSend && fileToSend != "." && func.isPathValid(fileToSend) && func.exists(fileToSend)){
+        console.log("whenReady: fileToSend is a valid file")
+        uploader.setFile(fileToSend)
+        startedWithFire = fileToSend
+        eventEmitter.emit("uploadFileChanged", fileToSend)
+    }
 
-    uploader.setFile(fileToSend)
 
-    tray = new Tray(path.join(__dirname, "app.ico"))
+    tray = new Tray(path.join(__dirname, "app.png"))
     const contextMenu = Menu.buildFromTemplate([
-        { label: "Beenden", click: () => app.quit() }
+        { label: "Öffnen", click: () => mainWindow.show()},
+        { label: "Beenden", click: () => {
+            app.quit()
+            app.exit()
+        }}
     ])
     tray.setToolTip("Friendly Fire")
     tray.setContextMenu(contextMenu)
 
-    createWindow()
-    !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
+    tray.on("click", () => {
+        mainWindow.focus()
+    })
+
+    tray.on("double-click", () => {
+        mainWindow.show()
+        mainWindow.focus()
+    })
+
+    await createWindow()
+    !app.isPackaged && mainWindow.isVisible() ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
+
+    const worker = new Worker(path.join(__dirname, "background-worker.js"))
+
+    worker.on("error", (err) => {
+        console.error("background: worker error:", err)
+    })
+
+    worker.on("exit", (code) => {
+        console.log("background: worker exited with code", code)
+    })
+
+    worker.postMessage({ action: "start", data: {} })
+    worker.postMessage({ action: "settings", data: { globalDir: config.globalDir, defaultDir: config.defaultDir, downloadsDir: config.downloadsDir } })
+
+    // from worker to here
+    worker.on("message", async (msg) => {
+        switch (msg.action) {
+
+            case "set":
+                console.log("background-worker: worker: settings set")
+                break
+
+            case "checked":
+                console.log("background-worker: worker: checked: data:", msg.data)
+                if(!msg.success){
+                    console.log("background-worker: worker: unsuccessful:", msg.data)
+                    break
+                }
+                if(!msg.data.newFiles){
+                    console.log("background-worker: worker: newFiles:", msg.data.newFiles)
+                    break
+                }
+                if(!msg.data.newFiles.length > 0){
+                    console.log("background-worker: worker: newFiles:", msg.data.newFiles)
+                    break
+                }
+
+                console.log("background-worker: worker: found newFiles", msg.data.newFiles)
+                eventEmitter.emit("newFiles", msg.data.files, msg.data.newFiles)
+                const friends = JSON.parse(func.decrypt(await func.read(config.friendsFile))).friends
+                const friend = friends.find((friend) => friend.id == msg.data.receiver)
+                
+                let notification
+                const title = "FriendlyFire"
+                const subtitle = "Datei erhalten"
+                const icon = path.join(__dirname, "app.png")
+                let actions = [
+                    { type: "button", text: "Herunterladen" },
+                    { type: "button", text: "Ansehen" },
+                ]
+                const closeButtonText = "Schließen"
+
+                if(process.platform == "win32"){
+                    actions = [
+						{ type: "button", text: "Herunterladen" },
+					]
+                }
+                else if(process.platform == "linux") actions = []
+
+                if (friend){
+                    notification = new Notification({ 
+                        title, 
+                        icon,
+                        subtitle, 
+                        body: friend.user + " hat dir " + msg.data.newFiles[0].name + " gesendet.",
+                        actions,
+                        closeButtonText
+                    })
+                }
+                else {
+                    notification = new Notification({
+						title,
+						icon,
+						subtitle,
+						body: "Du hast " + msg.data.newFiles[0].name + " gesendet bekommen.",
+						actions,
+						closeButtonText
+					})
+                }
+
+                notification.on("action", (event, index) => {
+                    if (index == 0) {
+                        mainWindow.show()
+                        mainWindow.focus()
+                    } else if (index == 1) {
+                        mainWindow.show()
+                        mainWindow.focus()
+                        eventEmitter.emit("downloadFile", msg.data.newFiles[0])
+                    }
+                })
+
+                notification.on("failed", (event, error) => {
+                    console.log("background-worker: notification failed:", error)
+                })
+
+                notification.on("click", (event) => {
+                    mainWindow.show()
+                    mainWindow.focus()
+                })
+
+                notification.show()
+                break
+
+            case "started":
+                console.log("bacgkround-worker: worker: started")
+                break
+
+            default:
+                console.log("background-worker: worker: default break")
+                break
+        }
+    })
+
+    setInterval(function(){
+        if(downloader.receiver) worker.postMessage({action: "check", data: {receiver: downloader.receiver}})
+    }, (localConfig.pollInterval || 30) * 1000)
 })
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -304,50 +472,55 @@ const createWindow = async () => {
     
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 720,
-        minHeight: 720,
-        minWidth: 1280,
-        maxWidth: 1920,
-        autoHideMenuBar: true,
-        icon: path.join(config.defaultDir, "app.ico"),
-        title: "Friendly Fire",
-        titleBarStyle: "hidden",
-        titleBarOverlay: {
-            color: "rgb(10,10,15)",
-            symbolColor: "rgb(255, 75, 0)",
-            height: 25,
-        },
-        center: true,
-        backgroundColor: "rgb(10,10,15)",
-        darkTheme: true,
-        resizable: false,
-        fullscreenable: false,
-        maximizable: false
-    })
+		width: 1280,
+		height: 720,
+		minHeight: 720,
+		minWidth: 1280,
+		maxWidth: 1920,
+		autoHideMenuBar: true,
+		icon: path.join(config.defaultDir, "app.ico"),
+		title: "Friendly Fire",
+		titleBarStyle: "hidden",
+		titleBarOverlay: {
+			color: "rgb(10,10,15)",
+			symbolColor: "rgb(255, 75, 0)",
+			height: 25,
+		},
+		center: true,
+		backgroundColor: "rgb(10,10,15)",
+		darkTheme: true,
+		resizable: false,
+		fullscreenable: false,
+		maximizable: false,
+		show: false,
+	})
 
     mainWindow.loadURL("http://localhost:" + port)
 
-    // Open the DevTools.
-    //!app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
+    mainWindow.on("close", (event) => {
+        event.preventDefault()
+        !app.isPackaged ? mainWindow.webContents.closeDevTools() : console.log("createWindow: blocked dev tools from closing")
+        mainWindow.hide()
+    })
+
+    mainWindow.on("focus", () => {
+        !app.isPackaged ? mainWindow.webContents.openDevTools() : console.log("createWindow: blocked dev tools from opening")
+	})
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+app.on("window-all-closed", () => {
+    if(process.platform !== "darwin") {
+        e.preventDefault()
+    }
 })
 
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
+app.on("activate", () => {
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if(BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+    }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.

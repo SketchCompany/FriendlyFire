@@ -44,9 +44,9 @@ class Downloader extends EventEmitter{
         if(this.isRunning) return
         this.isRunning = true
         console.log("downloader: start: downloader started")
-		this.loop = setInterval(async () => {
-			await this.update()
-		}, this.pollInterval * 1000)
+		// this.loop = setInterval(async () => {
+		// 	await this.update()
+		// }, (this.pollInterval || 30) * 1000)
 
         await this.update()
     }

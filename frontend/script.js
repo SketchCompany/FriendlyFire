@@ -110,7 +110,6 @@ function updateFriendsList(){
     friendsListElement.empty()
 
     socket.emit("b:get-friends", (friends) => {
-        console.log(friends)
         $(".friends").empty()
         friends.forEach((element, index) => {
             addFriendsListElement(element, index)

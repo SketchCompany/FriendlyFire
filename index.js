@@ -125,6 +125,7 @@ let startedWithFire = null
 io.on("connection", async (socket) => {
     console.log("socket: connected", socket.id)
 
+    let ownerID = ""
     if(func.exists(config.userFile)){
         const rawUserFile = await func.read(config.userFile)
         const decryptedJSON = func.decrypt(rawUserFile)
@@ -132,6 +133,7 @@ io.on("connection", async (socket) => {
         const user1ID = await func.authenticate(data.token)
         if(user1ID){
             socket.emit("f:logged-in", data.user)
+            ownerID = user1ID
         }
         else{
             const open = await import("open")
@@ -153,13 +155,13 @@ io.on("connection", async (socket) => {
         socket.emit("f:file-set", file)
     })
 
-    eventEmitter.on("newFiles", (files, newFiles) => {
-        socket.emit("f:set-files-to-download", files, newFiles)
+    eventEmitter.on("newFiles", async (files, newFiles) => {
+        socket.emit("f:set-files-to-download", files, newFiles, ownerID)
     })
 
-    downloader.on("filesToDownloadChanged", (files, filesToDownload) => {
-		socket.emit("f:set-files-to-download", files, filesToDownload)
-	})
+    downloader.on("filesToDownloadChanged", async (files, filesToDownload) => {
+        socket.emit("f:set-files-to-download", files, filesToDownload, ownerID)
+    })
 
     socket.on("b:update-files", async (arg) => {
         await downloader.update()
@@ -281,6 +283,18 @@ io.on("connection", async (socket) => {
         else{
             console.error("send-file: failed", response)
             socket.emit("f:file-sent-failed", response)
+        }
+    })
+
+    socket.on("b:delete-file", async (files, name) =>{
+        const file = downloader.getLatestFileVersion(files, name)
+        const user1ID = ownerID
+        const user2ID = downloader.receiver
+        if(!user2ID) return
+
+        const response = await func.send(localConfig.serverUrl + "/delete", {user1ID, user2ID, files, file}, true)
+        if(response.status == 1){
+            socket.emit("f:deleted-file")
         }
     })
 })

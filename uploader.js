@@ -2,12 +2,12 @@ const fs = require("fs")
 const path = require("path")
 const http = require("http")
 const https = require("https")
+const archiver = require("archiver")
 const FormData = require("form-data")
 const { app, BrowserWindow, Tray, Menu, dialog } = require("electron")
 const config = require("./config")
 const func = require("./functions.js")
 const localConfig = config.loadLocalConfig()
-const url = require("url")
 
 class Uploader{
     constructor(file, receiver){
@@ -33,6 +33,27 @@ class Uploader{
         return new Promise(async cb => {
             try{
                 if(this.file && this.receiver && socket){
+                    const compressResponse = await this.compress(this.file)
+
+                    if(!compressResponse.success){
+                        cb({
+							success: false,
+							data: "start: compresseResponse throughs error:" + compressResponse.data,
+						})
+                        return
+                    }
+
+                    const compressedFile = compressResponse.data
+
+                    if(!func.exists(compressedFile)){
+                        console.error("uploader: start: compressedFile does not exist at", compressedFile)
+                        cb({
+							success: false,
+							data: "start: compressedFile does not exist at " + compressedFile,
+						})
+                        return
+                    }
+
                     const formData = new FormData()
 
                     if(func.exists(config.userFile)){
@@ -64,8 +85,9 @@ class Uploader{
 
                     console.log("uploader: start: user2ID", this.receiver)
                     formData.append("user2ID", this.receiver)
-                    formData.append("file", fs.createReadStream(this.file))
-                    console.log("uploader: start: file", this.file)
+                    formData.append("compressed", true)
+                    formData.append("file", fs.createReadStream(compressedFile))
+                    console.log("uploader: start: file", compressedFile)
 
                     // Parse the server URL
                     const uploadUrl = new URL("/upload", localConfig.serverUrl)
@@ -82,7 +104,11 @@ class Uploader{
                     formData.getLength((err, length) => {
                         if (err) {
                             console.error("uploader: start: error getting form length", err)
-                            cb({ success: false, data: err })
+                            fs.unlink(compressedFile, () => {})
+                            cb({ 
+                                success: false, 
+                                data: err 
+                            })
                             return
                         }
                         options.headers['Content-Length'] = length
@@ -99,6 +125,11 @@ class Uploader{
                                 } catch (e) {
                                     data = responseData
                                 }
+
+                                fs.unlink(compressedFile, (err) => {
+									if(err) console.error("uploader: start: error deleting temp file:", err)
+								})
+
                                 if (res.statusCode >= 200 && res.statusCode < 300) {
                                     console.log("uploader: start: file upload successful on client with response", data)
                                     cb({
@@ -117,6 +148,7 @@ class Uploader{
 
                         req.on("error", err => {
                             console.error("uploader: start: catched error", err)
+                            fs.unlink(compressedFile, () => {})
                             cb({
                                 success: false,
                                 data: err
@@ -158,6 +190,45 @@ class Uploader{
             }
             catch(err){
                 console.error("uploader: start:", err)
+                cb({
+                    success: false,
+                    data: err
+                })
+            }
+        })
+    }
+
+    compress(file){
+        return new Promise(async cb => {
+            try{
+                const tempPath = app.getPath("temp")
+				const fileName = path.basename(file)
+				const zipPath = path.join(tempPath, fileName + ".zip")
+
+				const output = fs.createWriteStream(zipPath)
+				const archive = archiver("zip", { zlib: { level: 9 } })
+
+				output.on("close", () => {
+					cb({
+						success: true,
+						data: zipPath,
+					})
+				})
+
+				archive.on("error", (err) => {
+					console.error("uploader: compress: archiver error", err)
+					cb({
+						success: false,
+						data: err,
+					})
+				})
+
+				archive.pipe(output)
+				archive.file(file, { name: fileName })
+				archive.finalize()
+            }
+            catch(err){
+                console.error("uploader: compress: error", err)
                 cb({
                     success: false,
                     data: err

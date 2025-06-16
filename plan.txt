@@ -2,4 +2,3 @@ Senden an mehrere Freunde
 zuletzt gesendet speichern
 dateien löschen wenn selber gesendet
 archiver - komprimieren der dateien
-make background worker

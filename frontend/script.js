@@ -204,45 +204,56 @@ function updateFiles(){
     socket.emit("b:update-files")
 }
 
-// socket.on("f:registry-pulled", (files) => {
-// 	updateRegistryView(files)
-// })
-// socket.on("f:registry-pulled-failed", (err) => {
-//     console.error(err)
-//     notify("Aktuallisieren fehlgeschlagen", err, "error")
-// })
-
 socket.on("f:file-set", (file) => {
     setFilePath(file)
     openTab1()
 })
 
-socket.on("f:set-files-to-download", (files, filesToDownload) => {
-    updateRegistryView(files, filesToDownload)
+socket.on("f:set-files-to-download", (files, filesToDownload, ownerID) => {
+	updateRegistryView(files, filesToDownload, ownerID)
 })
-
-function updateRegistryView(files, filesToDownload){
+let registryFiles = []
+function updateRegistryView(files, filesToDownload, ownerID){
     if(!filesToDownload) filesToDownload = []
     console.log("files", files)
+    registryFiles = files
     $(".files").empty()
     files.forEach((element, index) => {
-        addRegistryViewElement(element, index, filesToDownload.includes(element.name))
+        const isOwner = ownerID == element.sender ? true : false
+        const isNew = filesToDownload.includes(element.name)
+        console.log("isOwnser", isOwner, "ownerID", ownerID)
+        addRegistryViewElement(element, index, isOwner, isNew)
     })
 }
-function addRegistryViewElement(file, index, isNew){
+function addRegistryViewElement(file, index, isOwner, isNew){
     const element = $(`
         <div name="${file.name}" index="${index}" class="button">
             <span class="info">
                 <span class="bi bi-file-earmark-text"></span>
                 <p>${file.name}</p>
             </span>
-            <span class="bi bi-cloud-download"></span>
+            <div class="symbols">
+                <span class="bi bi-cloud-download"></span>
+            </div>
         </div>
     `)
     if(isNew) element.addClass("new")
+    
+    if(isOwner){
+        console.log("isOwner for", file.name)
+        updateCtxMenu("own-file-dialog")
+    }
     
     element.click(function(){
         socket.emit("b:download-file", file)
     })
     $(".files").append(element)
 }
+function deleteFile(element){
+    socket.emit("b:delete-file", registryFiles, $(element).attr("name"), $(element).attr("index"))
+}
+createCtxMenu(".files .button", "own-file", ``, function(i, element){
+    if(i == 0){
+        deleteFile(element)
+    }
+})

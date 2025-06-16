@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require("path")
+const unzipper = require("unzipper")
 const http = require("http")
 const https = require("https")
 const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
@@ -131,7 +132,7 @@ class Downloader extends EventEmitter{
                     data: "download: socket was not set"
                 })
             }
-            if(!file && !/\S/.test(file)){
+            if(!file && !file.name){
                 console.error("downloader: download: file was not set", file)
                 cb({
 					success: false,
@@ -161,6 +162,10 @@ class Downloader extends EventEmitter{
 				},
 			}
 
+            const tempDir = app.getPath("temp")
+			const tempFilePath = path.join(tempDir, file.name + (file.compressed ? ".zip" : ""))
+			const finalOutputPath = path.join(localConfig.downloadDir, file.name)
+
 			const reqModule = isHttps ? https : http
 			const req = reqModule.request(options, (res) => {
 				if (res.statusCode !== 200) {
@@ -178,8 +183,7 @@ class Downloader extends EventEmitter{
 
 				const total = parseInt(res.headers["content-length"] || "0", 10)
 				let loaded = 0
-				const output = localConfig.downloadDir + file.name
-				const writer = fs.createWriteStream(output)
+				const writer = fs.createWriteStream(tempFilePath)
 
 				res.on("data", (chunk) => {
 					loaded += chunk.length
@@ -213,15 +217,49 @@ class Downloader extends EventEmitter{
 				res.pipe(writer)
 
 				writer.on("finish", () => {
-					console.log("downloader: download: download finished at", output)
-					cb({
-						success: true,
-						data: file,
-					})
+					console.log("downloader: download: download finished at", tempFilePath)
+					
+                    if(file.compressed){
+                        this.decompress(tempFilePath, finalOutputPath).then((decompressResult) => {
+							fs.unlink(tempFilePath, (err) => {
+								if (err) console.error("downloader: download: error deleting temp zip file", err)
+							})
+							if (decompressResult.success) {
+								cb({
+									success: true,
+									data: file,
+								})
+							} else {
+								cb({
+									success: false,
+									data: decompressResult.data,
+								})
+							}
+						})
+                    }
+                    else{
+                        fs.copyFile(tempFilePath, finalOutputPath, (err) => {
+							fs.unlink(tempFilePath, () => {})
+							if(err){
+								console.error("downloader: download: error moving file", err)
+								cb({
+									success: false,
+									data: err,
+								})
+							} 
+                            else{
+								cb({
+									success: true,
+									data: file,
+								})
+							}
+						})
+                    }
 				})
 				writer.on("error", (err) => {
 					console.error("downloader: download: download failed", err)
-					cb({
+                    fs.unlink(tempFilePath, () => {})
+                    cb({
 						success: false,
 						data: err,
 					})
@@ -314,6 +352,41 @@ class Downloader extends EventEmitter{
             } 
             catch(err){
                 console.error("downloader: pullRegistry: error on download", err)
+            }
+        })
+    }
+
+    decompress(path, output){
+        return new Promise(async cb =>{
+            try{
+                const outputDir = path.dirname(output)
+				if (!fs.existsSync(outputDir)) {
+					fs.mkdirSync(outputDir, { recursive: true })
+				}
+
+                fs.createReadStream(path)
+					.pipe(unzipper.ParseOne()) // Only extract the first file in the zip
+					.pipe(fs.createWriteStream(output))
+					.on("finish", () => {
+						cb({
+							success: true,
+							data: output,
+						})
+					})
+					.on("error", (err) => {
+						console.error("downloader: decompress: error:", err)
+						cb({
+							success: false,
+							data: err,
+						})
+					})
+            }
+            catch(err){
+                console.error("downloader: decompress: error:", err)
+                cb({
+                    success: false,
+                    data: err
+                })
             }
         })
     }

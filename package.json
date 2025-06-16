@@ -50,6 +50,7 @@
 		"nodemon": "^3.1.0"
 	},
 	"dependencies": {
+		"archiver": "^7.0.1",
 		"auto-launch": "^5.0.6",
 		"dotenv": "^16.5.0",
 		"electron": "^36.0.0",
@@ -62,6 +63,7 @@
 		"open": "^10.1.2",
 		"progress": "^2.0.3",
 		"socket.io": "^4.8.1",
+		"unzipper": "^0.12.3",
 		"update-electron-app": "^3.1.1"
 	}
 }

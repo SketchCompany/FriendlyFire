@@ -1019,7 +1019,23 @@ footer{
 .navigation-panel .right .tab2 .files .button .bi-cloud-download{
     color: var(--hover);
 }
-.navigation-panel .right .tab2 .files .button.new .bi-cloud-download, .navigation-panel .right .tab2 .files .button.new, .navigation-panel .right .tab2 .files .button.new p{
+.navigation-panel .right .tab2 .files .button.new .symbols .bi-cloud-download, .navigation-panel .right .tab2 .files .button.new, .navigation-panel .right .tab2 .files .button.new p{
+    color: var(--primary);
+}
+.navigation-panel .right .tab2 .files .button .symbols{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.navigation-panel .right .tab2 .files .button .bi-x-lg{
+    color: var(--font-primary);
+    padding: 3px 6px;
+    background-color: var(--background3);
+    border-radius: 8px;
+    font-size: 12px;
+}
+.navigation-panel .right .tab2 .files .button .bi-x-lg:hover{
+    background-color: var(--background4);
     color: var(--primary);
 }
 .navigation-panel .right .tab2 .files .button .info{
